@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>IoT Dashboard Pro</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<h1>IoT Professional Dashboard</h1>
+		<div id="status">Connecting to server...</div>
+		<div class="dashboard-container">
+			<div class="card">
+				<h2>PZEM-004T</h2>
+				<canvas id="gauge-pzem"></canvas>
+				<div id="pzem-value" class="gauge-value">0 mA</div>
+			</div>
+			<div class="card">
+				<h2>ZMCT103C</h2>
+				<canvas id="gauge-zmct"></canvas>
+				<div id="zmct-value" class="gauge-value">0 mA</div>
+			</div>
+			<div class="card">
+				<h2>Kontrol Relay</h2>
+				<div id="relay-status" class="status-indicator off">MATI</div>
+				<div class="button-group">
+					<button id="btn-on">NYALAKAN</button>
+					<button id="btn-off">MATIKAN</button>
+				</div>
+			</div>
+		</div>
+		<script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
+		<script src="script.js"></script>
+	</body>
+</html>
