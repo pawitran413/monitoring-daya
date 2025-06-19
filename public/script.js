@@ -34,15 +34,25 @@ function onLoad(event) {
 function initUI() {
 	// Inisialisasi Gauge PZEM
 	const pzemGaugeElement = document.getElementById("gauge-pzem");
-	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(gaugeOptions);
-	pzem.gauge.maxValue = 900; // Misal, batas daya total 1000W
+	// Opsi khusus untuk gauge besar
+	const pzemGaugeOptions = {
+		...gaugeOptions,
+		staticLabels: {
+			font: "12px sans-serif",
+			labels: [0, 150, 300, 450],
+			color: "#000000",
+			fractionDigits: 0,
+		},
+	};
+	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(pzemGaugeOptions);
+	pzem.gauge.maxValue = 450; // Batas daya total 900W
 	pzem.gauge.set(0);
 	pzem.valueElement = document.getElementById("pzem-value");
 
 	// Inisialisasi Gauge untuk 3 stop kontak
 	for (let i = 1; i <= 3; i++) {
 		const gaugeElement = document.getElementById(`gauge-zmct-${i}`);
-		// Buat opsi baru agar label tidak tumpang tindih
+		// Opsi khusus untuk gauge kecil
 		const zmctGaugeOptions = {
 			...gaugeOptions,
 			staticLabels: {
@@ -53,7 +63,7 @@ function initUI() {
 			},
 		};
 		const gauge = new Gauge(gaugeElement).setOptions(zmctGaugeOptions);
-		gauge.maxValue = 300; // Misal, batas daya per stop kontak 300W
+		gauge.maxValue = 300; // Batas daya per stop kontak 300W
 		gauge.set(0);
 
 		outlets[i] = {
@@ -64,7 +74,7 @@ function initUI() {
 	}
 }
 
-// --- Logika WebSocket (tidak berubah) ---
+// --- Logika WebSocket ---
 function initWebSocket() {
 	console.log("Mencoba membuka koneksi WebSocket...");
 	websocket = new WebSocket(gateway);
@@ -88,15 +98,18 @@ function onMessage(event) {
 	const data = JSON.parse(event.data);
 	console.log("Pesan diterima:", data);
 
-	// Update Gauge Daya Total PZEM
+	// Update Gauge Daya Total PZEM (akan selalu berjalan jika data pzem_w ada)
 	if (data.pzem_w !== undefined) {
 		const powerValue = data.pzem_w.toFixed(1);
 		pzem.valueElement.textContent = `${powerValue} W`;
 		pzem.gauge.set(powerValue);
 	}
 
-	// Update setiap stop kontak
+	// =================================================================
+	// PENYESUAIAN PENTING: Hanya proses 'outlets' jika datanya ada
+	// =================================================================
 	if (data.outlets && Array.isArray(data.outlets)) {
+		// Kode di dalam blok ini HANYA akan berjalan jika ESP32 mengirim data 'outlets'
 		data.outlets.forEach((outletData) => {
 			const outletUI = outlets[outletData.id];
 			if (outletUI) {
@@ -110,6 +123,7 @@ function onMessage(event) {
 			}
 		});
 	}
+	// =================================================================
 }
 
 // Fungsi helper untuk mengupdate status relay
@@ -126,7 +140,7 @@ function updateRelayStatus(outletId, status) {
 	}
 }
 
-// --- Logika Kontrol Tombol (tidak berubah) ---
+// --- Logika Kontrol Tombol ---
 function initButtons() {
 	document.querySelectorAll(".btn-on").forEach((button) => {
 		button.addEventListener("click", () => {
