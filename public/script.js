@@ -2,95 +2,11 @@
 const gateway = `ws://${window.location.hostname}:${window.location.port}/`;
 let websocket;
 
-// --- Fungsi Utama untuk memulai semuanya ---
-window.addEventListener("load", onLoad);
+// --- Objek untuk menyimpan referensi gauge dan elemen UI ---
+const pzem = {};
+const outlets = {};
 
-function onLoad(event) {
-	initWebSocket();
-	initButtons();
-}
-
-// --- Logika WebSocket ---
-function initWebSocket() {
-	console.log("Mencoba membuka koneksi WebSocket...");
-	websocket = new WebSocket(gateway);
-	websocket.onopen = onOpen;
-	websocket.onclose = onClose;
-	websocket.onmessage = onMessage; // Fungsi untuk menerima data dari server
-}
-
-function onOpen(event) {
-	console.log("Koneksi dibuka");
-	document.getElementById("status").innerHTML = "Terhubung ke Server";
-}
-
-function onClose(event) {
-	console.log("Koneksi ditutup");
-	document.getElementById("status").innerHTML =
-		"Koneksi terputus. Mencoba lagi...";
-	// Coba hubungkan kembali setelah 2 detik
-	setTimeout(initWebSocket, 2000);
-}
-
-// FUNGSI INI MENANGANI DATA YANG DATANG DARI SERVER
-function onMessage(event) {
-	console.log("Pesan diterima:", event.data);
-	const data = JSON.parse(event.data);
-
-	// Cek apakah pesan berisi data sensor sebelum memperbarui UI
-	if (data.pzem_mA !== undefined) {
-		const pzemValue = Math.round(data.pzem_mA);
-		document.getElementById("pzem-value").innerHTML = `${pzemValue} mA`;
-		pzemGauge.set(pzemValue);
-	}
-	if (data.zmct_mA !== undefined) {
-		const zmctValue = Math.round(data.zmct_mA);
-		document.getElementById("zmct-value").innerHTML = `${zmctValue} mA`;
-		zmctGauge.set(zmctValue);
-	}
-
-	// Cek apakah pesan berisi status relay sebelum memperbarui UI
-	if (data.relay_status !== undefined) {
-		const relayStatusElement = document.getElementById("relay-status");
-		if (data.relay_status) {
-			relayStatusElement.textContent = "NYALA";
-			relayStatusElement.className = "status-indicator on";
-		} else {
-			relayStatusElement.textContent = "MATI";
-			relayStatusElement.className = "status-indicator off";
-		}
-	}
-}
-
-// --- Logika Kontrol Tombol ---
-function initButtons() {
-	document.getElementById("btn-on").addEventListener("click", () => {
-		controlRelay("ON");
-	});
-	document.getElementById("btn-off").addEventListener("click", () => {
-		controlRelay("OFF");
-	});
-}
-
-// ===== PERUBAHAN UTAMA ADA DI SINI =====
-function controlRelay(state) {
-	console.log(`Mengirim perintah via WebSocket: ${state}`);
-
-	// Buat objek JSON untuk perintah
-	const command = {
-		command: state.toUpperCase(), // e.g., { "command": "ON" }
-	};
-
-	// Kirim objek JSON sebagai string melalui koneksi WebSocket
-	if (websocket && websocket.readyState === WebSocket.OPEN) {
-		websocket.send(JSON.stringify(command));
-	} else {
-		console.error("WebSocket tidak terbuka. Perintah tidak dapat dikirim.");
-	}
-}
-// ======================================
-
-// --- Konfigurasi & Inisialisasi Gauge (Tidak Ada Perubahan) ---
+// --- Opsi default untuk gauge ---
 const gaugeOptions = {
 	angle: -0.2,
 	lineWidth: 0.2,
@@ -103,19 +19,136 @@ const gaugeOptions = {
 	strokeColor: "#E0E0E0",
 	generateGradient: true,
 	highDpiSupport: true,
-	staticLabels: {
-		font: "12px sans-serif",
-		labels: [0, 500, 1000, 1500, 2000],
-		color: "#000000",
-		fractionDigits: 0,
-	},
 };
-const pzemGaugeElement = document.getElementById("gauge-pzem");
-const pzemGauge = new Gauge(pzemGaugeElement).setOptions(gaugeOptions);
-pzemGauge.maxValue = 2000;
-pzemGauge.set(0);
 
-const zmctGaugeElement = document.getElementById("gauge-zmct");
-const zmctGauge = new Gauge(zmctGaugeElement).setOptions(gaugeOptions);
-zmctGauge.maxValue = 2000;
-zmctGauge.set(0);
+// --- Fungsi Utama ---
+window.addEventListener("load", onLoad);
+
+function onLoad(event) {
+	initUI();
+	initWebSocket();
+	initButtons();
+}
+
+// Inisialisasi semua elemen UI dan Gauge
+function initUI() {
+	// Inisialisasi Gauge PZEM
+	const pzemGaugeElement = document.getElementById("gauge-pzem");
+	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(gaugeOptions);
+	pzem.gauge.maxValue = 900; // Misal, batas daya total 1000W
+	pzem.gauge.set(0);
+	pzem.valueElement = document.getElementById("pzem-value");
+
+	// Inisialisasi Gauge untuk 3 stop kontak
+	for (let i = 1; i <= 3; i++) {
+		const gaugeElement = document.getElementById(`gauge-zmct-${i}`);
+		// Buat opsi baru agar label tidak tumpang tindih
+		const zmctGaugeOptions = {
+			...gaugeOptions,
+			staticLabels: {
+				font: "10px sans-serif",
+				labels: [0, 100, 200, 300],
+				color: "#000000",
+				fractionDigits: 0,
+			},
+		};
+		const gauge = new Gauge(gaugeElement).setOptions(zmctGaugeOptions);
+		gauge.maxValue = 300; // Misal, batas daya per stop kontak 300W
+		gauge.set(0);
+
+		outlets[i] = {
+			gauge: gauge,
+			valueElement: document.getElementById(`zmct${i}-value`),
+			statusElement: document.getElementById(`relay${i}-status`),
+		};
+	}
+}
+
+// --- Logika WebSocket (tidak berubah) ---
+function initWebSocket() {
+	console.log("Mencoba membuka koneksi WebSocket...");
+	websocket = new WebSocket(gateway);
+	websocket.onopen = onOpen;
+	websocket.onclose = onClose;
+	websocket.onmessage = onMessage;
+}
+function onOpen(event) {
+	console.log("Koneksi dibuka");
+	document.getElementById("status").innerHTML = "Terhubung ke Server";
+}
+function onClose(event) {
+	console.log("Koneksi ditutup");
+	document.getElementById("status").innerHTML =
+		"Koneksi terputus. Mencoba lagi...";
+	setTimeout(initWebSocket, 2000);
+}
+
+// --- Pemrosesan Pesan & Update UI ---
+function onMessage(event) {
+	const data = JSON.parse(event.data);
+	console.log("Pesan diterima:", data);
+
+	// Update Gauge Daya Total PZEM
+	if (data.pzem_w !== undefined) {
+		const powerValue = data.pzem_w.toFixed(1);
+		pzem.valueElement.textContent = `${powerValue} W`;
+		pzem.gauge.set(powerValue);
+	}
+
+	// Update setiap stop kontak
+	if (data.outlets && Array.isArray(data.outlets)) {
+		data.outlets.forEach((outletData) => {
+			const outletUI = outlets[outletData.id];
+			if (outletUI) {
+				// Update Gauge dan Nilai Watt ZMCT
+				const powerValue = outletData.zmct_w || 0;
+				outletUI.valueElement.textContent = `${powerValue.toFixed(1)} W`;
+				outletUI.gauge.set(powerValue);
+
+				// Update Status Relay
+				updateRelayStatus(outletData.id, outletData.relay_status);
+			}
+		});
+	}
+}
+
+// Fungsi helper untuk mengupdate status relay
+function updateRelayStatus(outletId, status) {
+	const statusElement = document.getElementById(`relay${outletId}-status`);
+	if (statusElement) {
+		if (status) {
+			statusElement.textContent = "NYALA";
+			statusElement.className = "status-indicator on";
+		} else {
+			statusElement.textContent = "MATI";
+			statusElement.className = "status-indicator off";
+		}
+	}
+}
+
+// --- Logika Kontrol Tombol (tidak berubah) ---
+function initButtons() {
+	document.querySelectorAll(".btn-on").forEach((button) => {
+		button.addEventListener("click", () => {
+			controlRelay(button.dataset.relay, "ON");
+		});
+	});
+	document.querySelectorAll(".btn-off").forEach((button) => {
+		button.addEventListener("click", () => {
+			controlRelay(button.dataset.relay, "OFF");
+		});
+	});
+}
+function controlRelay(relayId, state) {
+	console.log(`Mengirim perintah ke relay ${relayId}: ${state}`);
+	const command = {
+		type: "relayControl",
+		relay_id: parseInt(relayId),
+		state: state.toUpperCase(),
+	};
+	if (websocket && websocket.readyState === WebSocket.OPEN) {
+		websocket.send(JSON.stringify(command));
+	} else {
+		console.error("WebSocket tidak terbuka. Perintah tidak dapat dikirim.");
+	}
+}
