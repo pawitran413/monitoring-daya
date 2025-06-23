@@ -1,5 +1,5 @@
 // Menggunakan hostname dari URL browser untuk terhubung ke server
-const gateway = `ws://${window.location.hostname}:${window.location.port}/`;
+const gateway = 'wss://monitoring-daya-production.up.railway.app';
 let websocket;
 
 // --- Objek untuk menyimpan referensi gauge dan elemen UI ---
