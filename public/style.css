@@ -20,30 +20,12 @@ h1 {
 /* Kontainer utama yang menampung semua kartu dashboard */
 .dashboard-container {
 	display: flex;
-	flex-direction: column;
 	justify-content: center;
-	align-items: center;
+	align-items: stretch; /* Membuat semua kartu sama tinggi */
 	flex-wrap: wrap;
 	gap: 30px; /* Jarak antar kartu */
 	margin-top: 30px;
 }
-
-.stop-kontak-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 40px;
-	flex-wrap: wrap;
-	margin-top: 30px;
-}
-
-.stop-kontak-item {
-	gap: 15px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-
 /* Wrapper untuk setiap kartu/widget di dashboard */
 .card {
 	background-color: #ffffff;

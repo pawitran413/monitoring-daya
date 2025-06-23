@@ -34,25 +34,23 @@ function onLoad(event) {
 function initUI() {
 	// Inisialisasi Gauge PZEM
 	const pzemGaugeElement = document.getElementById("gauge-pzem");
-	// Opsi khusus untuk gauge besar
 	const pzemGaugeOptions = {
 		...gaugeOptions,
 		staticLabels: {
 			font: "12px sans-serif",
-			labels: [0, 150, 300, 450],
+			labels: [0, 225, 450, 675, 900], // Label untuk daya hingga 900W
 			color: "#000000",
 			fractionDigits: 0,
 		},
 	};
 	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(pzemGaugeOptions);
-	pzem.gauge.maxValue = 450; // Batas daya total 900W
+	pzem.gauge.maxValue = 900; // Batas daya total 900W
 	pzem.gauge.set(0);
 	pzem.valueElement = document.getElementById("pzem-value");
 
 	// Inisialisasi Gauge untuk 3 stop kontak
 	for (let i = 1; i <= 3; i++) {
 		const gaugeElement = document.getElementById(`gauge-zmct-${i}`);
-		// Opsi khusus untuk gauge kecil
 		const zmctGaugeOptions = {
 			...gaugeOptions,
 			staticLabels: {
@@ -63,13 +61,14 @@ function initUI() {
 			},
 		};
 		const gauge = new Gauge(gaugeElement).setOptions(zmctGaugeOptions);
-		gauge.maxValue = 300; // Batas daya per stop kontak 300W
+		gauge.maxValue = 300;
 		gauge.set(0);
 
+		// PERBAIKAN: Gunakan ID yang benar dari HTML
 		outlets[i] = {
 			gauge: gauge,
-			valueElement: document.getElementById(`zmct${i}-value`),
-			statusElement: document.getElementById(`relay${i}-status`),
+			valueElement: document.getElementById(`zmct-value-${i}`),
+			statusElement: document.getElementById(`relay-status-${i}`),
 		};
 	}
 }
@@ -93,23 +92,22 @@ function onClose(event) {
 	setTimeout(initWebSocket, 2000);
 }
 
-// --- Pemrosesan Pesan & Update UI ---
+// =================================================================
+// --- FUNGSI onMessage() YANG TELAH DISESUAIKAN UNTUK FORMAT BARU ---
+// =================================================================
 function onMessage(event) {
 	const data = JSON.parse(event.data);
 	console.log("Pesan diterima:", data);
 
-	// Update Gauge Daya Total PZEM (akan selalu berjalan jika data pzem_w ada)
+	// Update Gauge Daya Total PZEM
 	if (data.pzem_w !== undefined) {
 		const powerValue = data.pzem_w.toFixed(1);
 		pzem.valueElement.textContent = `${powerValue} W`;
 		pzem.gauge.set(powerValue);
 	}
 
-	// =================================================================
-	// PENYESUAIAN PENTING: Hanya proses 'outlets' jika datanya ada
-	// =================================================================
+	// Update setiap stop kontak dari array 'outlets'
 	if (data.outlets && Array.isArray(data.outlets)) {
-		// Kode di dalam blok ini HANYA akan berjalan jika ESP32 mengirim data 'outlets'
 		data.outlets.forEach((outletData) => {
 			const outletUI = outlets[outletData.id];
 			if (outletUI) {
@@ -123,12 +121,11 @@ function onMessage(event) {
 			}
 		});
 	}
-	// =================================================================
 }
 
 // Fungsi helper untuk mengupdate status relay
 function updateRelayStatus(outletId, status) {
-	const statusElement = document.getElementById(`relay${outletId}-status`);
+	const statusElement = document.getElementById(`relay-status-${outletId}`);
 	if (statusElement) {
 		if (status) {
 			statusElement.textContent = "NYALA";
@@ -153,6 +150,7 @@ function initButtons() {
 		});
 	});
 }
+
 function controlRelay(relayId, state) {
 	console.log(`Mengirim perintah ke relay ${relayId}: ${state}`);
 	const command = {
