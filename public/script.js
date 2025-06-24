@@ -48,8 +48,8 @@ function initUI() {
 	pzem.gauge.set(0);
 	pzem.valueElement = document.getElementById("pzem-value");
 
-	// Inisialisasi Gauge untuk 3 stop kontak
-	for (let i = 1; i <= 3; i++) {
+	// Inisialisasi Gauge untuk 2 stop kontak
+	for (let i = 1; i <= 2; i++) {
 		const gaugeElement = document.getElementById(`gauge-zmct-${i}`);
 		const zmctGaugeOptions = {
 			...gaugeOptions,
