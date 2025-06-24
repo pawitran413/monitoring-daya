@@ -38,13 +38,13 @@ function initUI() {
 		...gaugeOptions,
 		staticLabels: {
 			font: "12px sans-serif",
-			labels: [0, 225, 450, 675, 900], // Label untuk daya hingga 900W
+			labels: [0, 150, 300, 450], // Label untuk daya hingga 900W
 			color: "#000000",
 			fractionDigits: 0,
 		},
 	};
 	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(pzemGaugeOptions);
-	pzem.gauge.maxValue = 900; // Batas daya total 900W
+	pzem.gauge.maxValue = 450; // Batas daya total 900W
 	pzem.gauge.set(0);
 	pzem.valueElement = document.getElementById("pzem-value");
 
@@ -55,13 +55,13 @@ function initUI() {
 			...gaugeOptions,
 			staticLabels: {
 				font: "10px sans-serif",
-				labels: [0, 100, 200, 300],
+				labels: [0, 150, 300, 450],
 				color: "#000000",
 				fractionDigits: 0,
 			},
 		};
 		const gauge = new Gauge(gaugeElement).setOptions(zmctGaugeOptions);
-		gauge.maxValue = 300;
+		gauge.maxValue = 450;
 		gauge.set(0);
 
 		// PERBAIKAN: Gunakan ID yang benar dari HTML
