@@ -7,21 +7,21 @@
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
-		<h1>Dashboard Monitoring & Kontrol Beban Listrik</h1>
-		<div id="status">Menghubungkan ke server...</div>
-
-		<div class="dashboard-container">
-			<div class="card">
-				<h2>Total Daya (PZEM)</h2>
+		<div class="pzem-section">
+			<h1>Dashboard Monitoring & Kontrol Beban Listrik</h1>
+			<div id="status">Menghubungkan ke server...</div>
+			<div class="pzem-container">
 				<canvas id="gauge-pzem"></canvas>
-				<div id="pzem-value" class="gauge-value">0 W</div>
+				<div id="pzem-value" class="pzem-value">0 W</div>
 			</div>
-
+		</div>
+		
+		<div class="dashboard-container">
 			<div class="card stop-kontak">
 				<h2>Stop Kontak 1</h2>
-				<canvas id="gauge-zmct-1"></canvas>
+				<canvas class="gauge-zmct" id="gauge-zmct-1"></canvas>
 				<div id="zmct-value-1" class="gauge-value">0 W</div>
-				<div id="relay-status-2" class="status-indicator off">MATI</div>
+				<div id="relay-status-2" class="status-indicator off"></div>
 				<!-- <div id="relay-status-1" class="status-indicator off">MATI</div> -->
 				<div class="button-group">
 					<button class="btn-on" data-relay="2">ON</button>
@@ -33,9 +33,9 @@
 
 			<div class="card stop-kontak">
 				<h2>Stop Kontak 2</h2>
-				<canvas id="gauge-zmct-2"></canvas>
+				<canvas class="gauge-zmct" id="gauge-zmct-2"></canvas>
 				<div id="zmct-value-2" class="gauge-value">0 W</div>
-				<div id="relay-status-1" class="status-indicator off">MATI</div>
+				<div id="relay-status-1" class="status-indicator off"></div>
 				<!-- <div id="relay-status-2" class="status-indicator off">MATI</div> -->
 				<div class="button-group">
 					<button class="btn-on" data-relay="1">ON</button>

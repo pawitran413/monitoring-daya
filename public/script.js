@@ -7,19 +7,36 @@ const pzem = {};
 const outlets = {};
 
 // --- Opsi default untuk gauge ---
-const gaugeOptions = {
-	angle: -0.2,
-	lineWidth: 0.2,
+const pzemGaugeOptions = {
+	angle: -0.5,
+	lineWidth: 0.1,
 	radiusScale: 1,
-	pointer: { length: 0.6, strokeWidth: 0.035, color: "#000000" },
+	pointer: { length: 0, strokeWidth: 0, color: "#000000" },
 	limitMax: false,
 	limitMin: false,
-	colorStart: "#6FADCF",
-	colorStop: "#8FC0DA",
-	strokeColor: "#E0E0E0",
+	colorStart: "#DCE995",
+	colorStop: "#BBEBC6",
+	strokeColor: "#78A1DF",
 	generateGradient: true,
 	highDpiSupport: true,
 };
+const zmctGaugeOptions = {
+	angle: -0.5,
+	lineWidth: 0.09,
+	radiusScale: 1,
+	pointer: { length: 0, strokeWidth: 0, color: "#000000" },
+	limitMax: false,
+	limitMin: false,
+	colorStart: "#DCE995",
+	colorStop: "#BBEBC6",
+	// strokeColor: "#78A1DF",
+	// colorStart: "#3767D1",
+	// colorStop: "#78A1DF",
+	strokeColor: "rgba(143, 208, 235, .3)",
+	generateGradient: true,
+	highDpiSupport: true,
+};
+
 
 // --- Fungsi Utama ---
 window.addEventListener("load", onLoad);
@@ -34,15 +51,15 @@ function onLoad(event) {
 function initUI() {
 	// Inisialisasi Gauge PZEM
 	const pzemGaugeElement = document.getElementById("gauge-pzem");
-	const pzemGaugeOptions = {
-		...gaugeOptions,
-		staticLabels: {
-			font: "12px sans-serif",
-			labels: [0, 150, 300, 450], // Label untuk daya hingga 900W
-			color: "#000000",
-			fractionDigits: 0,
-		},
-	};
+	// const pzemGaugeOptions = {
+		// ...pzemGaugeOptions,
+		// staticLabels: {
+		// 	font: "12px sans-serif",
+		// 	labels: [0, 150, 300, 450], // Label untuk daya hingga 900W
+		// 	color: "#000000",
+		// 	fractionDigits: 0,
+		// },
+	// };
 	pzem.gauge = new Gauge(pzemGaugeElement).setOptions(pzemGaugeOptions);
 	pzem.gauge.maxValue = 450; // Batas daya total 900W
 	pzem.gauge.set(0);
@@ -51,15 +68,15 @@ function initUI() {
 	// Inisialisasi Gauge untuk 2 stop kontak
 	for (let i = 1; i <= 2; i++) {
 		const gaugeElement = document.getElementById(`gauge-zmct-${i}`);
-		const zmctGaugeOptions = {
-			...gaugeOptions,
-			staticLabels: {
-				font: "10px sans-serif",
-				labels: [0, 150, 300, 450],
-				color: "#000000",
-				fractionDigits: 0,
-			},
-		};
+		// const zmctGaugeOptions = {
+		// 	...gaugeOptions,
+		// 	staticLabels: {
+		// 		font: "10px sans-serif",
+		// 		labels: [0, 150, 300, 450],
+		// 		color: "#000000",
+		// 		fractionDigits: 0,
+		// 	},
+		// };
 		const gauge = new Gauge(gaugeElement).setOptions(zmctGaugeOptions);
 		gauge.maxValue = 450;
 		gauge.set(0);
@@ -128,10 +145,10 @@ function updateRelayStatus(outletId, status) {
 	const statusElement = document.getElementById(`relay-status-${outletId}`);
 	if (statusElement) {
 		if (status) {
-			statusElement.textContent = "NYALA";
+			// statusElement.textContent = "NYALA";
 			statusElement.className = "status-indicator on";
 		} else {
-			statusElement.textContent = "MATI";
+			// statusElement.textContent = "MATI";
 			statusElement.className = "status-indicator off";
 		}
 	}
@@ -164,3 +181,31 @@ function controlRelay(relayId, state) {
 		console.error("WebSocket tidak terbuka. Perintah tidak dapat dikirim.");
 	}
 }
+
+// SCROLL
+document.addEventListener("DOMContentLoaded", function () {
+	const pzemContainer = document.querySelector('.pzem-section');
+
+    // Pastikan elemennya ada sebelum menambahkan event listener
+    if (pzemContainer) {
+        function handleScrollFade() {
+            const scrollY = window.scrollY;
+            
+            // Jarak scroll di mana elemen akan memudar sepenuhnya (dalam pixel)
+            // Anda bisa mengubah angka ini untuk mengatur kecepatan pudar
+            const fadeOutDistance = 300; 
+
+            // Hitung opacity baru (dari 1 ke 0)
+            let newOpacity = 1 - (scrollY / fadeOutDistance);
+
+            // Pastikan opacity tidak kurang dari 0 atau lebih dari 1
+            newOpacity = Math.max(0, Math.min(1, newOpacity));
+            
+            // Terapkan style opacity ke elemen
+            pzemContainer.style.opacity = newOpacity;
+        }
+
+        // Tambahkan event listener untuk event 'scroll'
+        window.addEventListener('scroll', handleScrollFade);
+    }
+});
